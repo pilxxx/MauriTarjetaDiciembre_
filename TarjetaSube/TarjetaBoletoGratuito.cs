@@ -14,23 +14,20 @@ namespace TarjetaSube
             ultimaFechaViaje = DateTime.MinValue;
         }
 
-        public decimal CalcularDescuento(decimal monto)
+        public virtual decimal CalcularDescuento(decimal monto)
         {
             DateTime hoy = DateTime.Now.Date;
 
-            // Resetear contador si es un nuevo día
             if (ultimaFechaViaje.Date != hoy)
             {
                 viajesGratuitosHoy = 0;
             }
 
-            // Si ya usó los 2 viajes gratuitos del día, cobra precio completo
             if (viajesGratuitosHoy >= MAX_VIAJES_GRATUITOS_DIA)
             {
                 return monto;
             }
 
-            // Viaje gratuito
             return 0;
         }
 
@@ -46,18 +43,32 @@ namespace TarjetaSube
             return viajesGratuitosHoy < MAX_VIAJES_GRATUITOS_DIA;
         }
 
-        public bool PuedeViajarEnEsteHorario()
+        public virtual bool PuedeViajarEnEsteHorario()
         {
             DateTime ahora = DateTime.Now;
             
-            // Verifica si es lunes a viernes
             if (ahora.DayOfWeek == DayOfWeek.Saturday || ahora.DayOfWeek == DayOfWeek.Sunday)
             {
                 return false;
             }
             
-            // Verifica si está entre las 6 y las 22
             if (ahora.Hour < 6 || ahora.Hour >= 22)
+            {
+                return false;
+            }
+            
+            return true;
+        }
+
+        // Sobrecarga para tests con fecha simulada
+        public virtual bool PuedeViajarEnEsteHorario(DateTime fecha)
+        {
+            if (fecha.DayOfWeek == DayOfWeek.Saturday || fecha.DayOfWeek == DayOfWeek.Sunday)
+            {
+                return false;
+            }
+            
+            if (fecha.Hour < 6 || fecha.Hour >= 22)
             {
                 return false;
             }
@@ -69,7 +80,6 @@ namespace TarjetaSube
         {
             DateTime hoy = DateTime.Now.Date;
 
-            // Resetear contador si es un nuevo día
             if (ultimaFechaViaje.Date != hoy)
             {
                 viajesGratuitosHoy = 0;

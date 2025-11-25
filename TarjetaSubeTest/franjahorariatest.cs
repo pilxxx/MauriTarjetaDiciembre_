@@ -5,159 +5,118 @@ using System;
 namespace TarjetaSubeTest
 {
     [TestFixture]
-    public class FranquiciaHorarioTest
+    public class FranjaHorariaTest
     {
         [Test]
-        public void MedioBoleto_PuedeViajarEnHorarioPermitido()
+        public void MedioBoleto_PuedeViajarLunesAViernes6a22()
         {
-            // Este test solo funciona si se ejecuta en dias de semana entre 6 y 22hs
-            // Para testing completo, se deberia usar una interfaz de tiempo mockeada
-
-            TarjetaMedioBoleto medio = new TarjetaMedioBoleto();
-            DateTime ahora = DateTime.Now;
-
-            // verificar si estamos en horario permitido
-            bool esHorarioPermitido = (ahora.DayOfWeek != DayOfWeek.Saturday &&
-                                       ahora.DayOfWeek != DayOfWeek.Sunday &&
-                                       ahora.Hour >= 6 && ahora.Hour < 22);
-
-            Assert.AreEqual(esHorarioPermitido, medio.PuedeViajarEnEsteHorario());
-        }
-
-        [Test]
-        public void MedioBoleto_VerificaDiaLaboral()
-        {
-            TarjetaMedioBoleto medio = new TarjetaMedioBoleto();
-            DateTime ahora = DateTime.Now;
-
-            bool resultado = medio.PuedeViajarEnEsteHorario();
-
-            // si es sabado o domingo, no deberia poder
-            if (ahora.DayOfWeek == DayOfWeek.Saturday || ahora.DayOfWeek == DayOfWeek.Sunday)
-            {
-                Assert.IsFalse(resultado);
-            }
-        }
-
-        [Test]
-        public void BoletoGratuito_NoTieneRestriccionHorario()
-        {
-            // Cambiado: TarjetaBoletoGratuito ya no tiene restricciones de horario
-            TarjetaBoletoGratuito gratuito = new TarjetaBoletoGratuito();
-
-            // Seg�n implementaci�n actual, siempre puede viajar
-            // El m�todo PuedeViajarEnEsteHorario fue removido
-            Colectivo colectivo = new Colectivo("102");
-            Boleto boleto = colectivo.PagarCon(gratuito);
-
-            Assert.IsNotNull(boleto); // Siempre puede generar boleto
-        }
-
-        [Test]
-        public void FranquiciaCompleta_VerificaHorario()
-        {
-            TarjetaFranquiciaCompleta franquicia = new TarjetaFranquiciaCompleta();
-            DateTime ahora = DateTime.Now;
-
-            bool resultado = franquicia.PuedeViajarEnEsteHorario();
-
-            // verificar que en fin de semana no puede
-            if (ahora.DayOfWeek == DayOfWeek.Saturday || ahora.DayOfWeek == DayOfWeek.Sunday)
-            {
-                Assert.IsFalse(resultado);
-            }
-        }
-
-        [Test]
-        public void Colectivo_MedioBoleto_NoPermitePagoFueraHorario()
-        {
-            // Nota: este test solo pasara si se ejecuta fuera del horario permitido
-            // En un entorno de produccion, se usaria dependency injection para el tiempo
-
             TarjetaMedioBoleto medio = new TarjetaMedioBoleto();
             medio.CargarSaldo(5000);
             Colectivo colectivo = new Colectivo("102");
-            DateTime ahora = DateTime.Now;
-
-            Boleto boleto = colectivo.PagarCon(medio);
-
-            // si estamos fuera de horario, deberia devolver null
-            bool esHorarioPermitido = (ahora.DayOfWeek != DayOfWeek.Saturday &&
-                                       ahora.DayOfWeek != DayOfWeek.Sunday &&
-                                       ahora.Hour >= 6 && ahora.Hour < 22);
-
-            if (!esHorarioPermitido)
-            {
-                Assert.IsNull(boleto);
-            }
-            else
-            {
-                Assert.IsNotNull(boleto);
-            }
-        }
-
-        [Test]
-        public void Colectivo_BoletoGratuito_SiemprePermitePago()
-        {
-            // Cambiado: BoletoGratuito siempre permite pago sin restricciones
-            TarjetaBoletoGratuito gratuito = new TarjetaBoletoGratuito();
-            gratuito.CargarSaldo(5000);
-            Colectivo colectivo = new Colectivo("K");
-
-            Boleto boleto = colectivo.PagarCon(gratuito);
-
-            // Siempre deberia poder pagar, sin importar horario
+            
+            // Lunes 10:00 (debería poder)
+            DateTime fechaValida = new DateTime(2024, 11, 4, 10, 0, 0);
+            Boleto boleto = colectivo.PagarCon(medio, fechaValida);
             Assert.IsNotNull(boleto);
         }
-
+        
         [Test]
-        public void Colectivo_FranquiciaCompleta_NoPermitePagoFueraHorario()
+        public void MedioBoleto_NoPuedeViajarSabado()
+        {
+            TarjetaMedioBoleto medio = new TarjetaMedioBoleto();
+            medio.CargarSaldo(5000);
+            Colectivo colectivo = new Colectivo("102");
+            
+            // Sábado 10:00 (no debería poder)
+            DateTime fechaSabado = new DateTime(2024, 11, 2, 10, 0, 0);
+            Boleto boleto = colectivo.PagarCon(medio, fechaSabado);
+            Assert.IsNull(boleto);
+        }
+        
+        [Test]
+        public void MedioBoleto_NoPuedeViajarDomingo()
+        {
+            TarjetaMedioBoleto medio = new TarjetaMedioBoleto();
+            medio.CargarSaldo(5000);
+            Colectivo colectivo = new Colectivo("102");
+            
+            // Domingo 10:00 (no debería poder)
+            DateTime fechaDomingo = new DateTime(2024, 11, 3, 10, 0, 0);
+            Boleto boleto = colectivo.PagarCon(medio, fechaDomingo);
+            Assert.IsNull(boleto);
+        }
+        
+        [Test]
+        public void MedioBoleto_NoPuedeViajarAntes de6AM()
+        {
+            TarjetaMedioBoleto medio = new TarjetaMedioBoleto();
+            medio.CargarSaldo(5000);
+            Colectivo colectivo = new Colectivo("102");
+            
+            // Lunes 5:00 (no debería poder)
+            DateTime fechaTemprana = new DateTime(2024, 11, 4, 5, 0, 0);
+            Boleto boleto = colectivo.PagarCon(medio, fechaTemprana);
+            Assert.IsNull(boleto);
+        }
+        
+        [Test]
+        public void MedioBoleto_NoPuedeViajarDespuesDe22()
+        {
+            TarjetaMedioBoleto medio = new TarjetaMedioBoleto();
+            medio.CargarSaldo(5000);
+            Colectivo colectivo = new Colectivo("102");
+            
+            // Lunes 22:00 (no debería poder)
+            DateTime fechaTarde = new DateTime(2024, 11, 4, 22, 0, 0);
+            Boleto boleto = colectivo.PagarCon(medio, fechaTarde);
+            Assert.IsNull(boleto);
+        }
+        
+        [Test]
+        public void BoletoGratuito_RespetaFranjaHoraria()
+        {
+            TarjetaBoletoGratuito gratuito = new TarjetaBoletoGratuito();
+            Colectivo colectivo = new Colectivo("K");
+            
+            // Lunes 10:00 (debería poder)
+            DateTime fechaValida = new DateTime(2024, 11, 4, 10, 0, 0);
+            Boleto boletoValido = colectivo.PagarCon(gratuito, fechaValida);
+            Assert.IsNotNull(boletoValido);
+            
+            // Domingo 10:00 (no debería poder)
+            DateTime fechaDomingo = new DateTime(2024, 11, 3, 10, 0, 0);
+            Boleto boletoInvalido = colectivo.PagarCon(gratuito, fechaDomingo);
+            Assert.IsNull(boletoInvalido);
+        }
+        
+        [Test]
+        public void FranquiciaCompleta_RespetaFranjaHoraria()
         {
             TarjetaFranquiciaCompleta franquicia = new TarjetaFranquiciaCompleta();
             Colectivo colectivo = new Colectivo("144");
-            DateTime ahora = DateTime.Now;
-
-            Boleto boleto = colectivo.PagarCon(franquicia);
-
-            bool esHorarioPermitido = (ahora.DayOfWeek != DayOfWeek.Saturday &&
-                                       ahora.DayOfWeek != DayOfWeek.Sunday &&
-                                       ahora.Hour >= 6 && ahora.Hour < 22);
-
-            if (!esHorarioPermitido)
-            {
-                Assert.IsNull(boleto);
-            }
+            
+            // Viernes 15:00 (debería poder)
+            DateTime fechaValida = new DateTime(2024, 11, 8, 15, 0, 0);
+            Boleto boletoValido = colectivo.PagarCon(franquicia, fechaValida);
+            Assert.IsNotNull(boletoValido);
+            
+            // Sábado 15:00 (no debería poder)
+            DateTime fechaSabado = new DateTime(2024, 11, 2, 15, 0, 0);
+            Boleto boletoInvalido = colectivo.PagarCon(franquicia, fechaSabado);
+            Assert.IsNull(boletoInvalido);
         }
-
+        
         [Test]
-        public void TarjetaNormal_NoTieneRestriccionHorario()
+        public void TarjetaNormal_NoTieneRestriccionHoraria()
         {
-            // Las tarjetas normales pueden viajar en cualquier horario
             Tarjeta normal = new Tarjeta();
             normal.CargarSaldo(5000);
             Colectivo colectivo = new Colectivo("27");
-
-            Boleto boleto = colectivo.PagarCon(normal);
-
-            // siempre deberia poder pagar, sin importar horario
+            
+            // Domingo 23:00 (debería poder, es tarjeta normal)
+            DateTime fechaDomingo = new DateTime(2024, 11, 3, 23, 0, 0);
+            Boleto boleto = colectivo.PagarCon(normal, fechaDomingo);
             Assert.IsNotNull(boleto);
-        }
-
-        [Test]
-        public void MetodosPuedeViajar_DevuelvenBooleano()
-        {
-            TarjetaMedioBoleto medio = new TarjetaMedioBoleto();
-            TarjetaFranquiciaCompleta franquicia = new TarjetaFranquiciaCompleta();
-
-            // verificar que los metodos existen y devuelven bool
-            Assert.IsInstanceOf<bool>(medio.PuedeViajarEnEsteHorario());
-            Assert.IsInstanceOf<bool>(franquicia.PuedeViajarEnEsteHorario());
-
-            // TarjetaBoletoGratuito ya no tiene este m�todo
-            TarjetaBoletoGratuito gratuito = new TarjetaBoletoGratuito();
-            Colectivo colectivo = new Colectivo("102");
-            Boleto boleto = colectivo.PagarCon(gratuito);
-            Assert.IsNotNull(boleto); // Verificamos que funciona en su lugar
         }
     }
 }

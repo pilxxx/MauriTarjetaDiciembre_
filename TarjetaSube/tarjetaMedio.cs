@@ -8,22 +8,20 @@ namespace TarjetaSube
         {
         }
 
-        public decimal CalcularDescuento(decimal monto)
+        public virtual decimal CalcularDescuento(decimal monto)
         {
             return monto / 2;
         }
 
-        public bool PuedeViajarEnEsteHorario()
+        public virtual bool PuedeViajarEnEsteHorario()
         {
             DateTime ahora = DateTime.Now;
             
-            // verifica si es lunes a viernes
             if (ahora.DayOfWeek == DayOfWeek.Saturday || ahora.DayOfWeek == DayOfWeek.Sunday)
             {
                 return false;
             }
             
-            // verifica si esta entre las 6 y las 22
             if (ahora.Hour < 6 || ahora.Hour >= 22)
             {
                 return false;
@@ -32,10 +30,20 @@ namespace TarjetaSube
             return true;
         }
 
-        public override bool DescontarSaldo(decimal monto)
+        // Método para tests con fecha simulada
+        public virtual bool PuedeViajarEnEsteHorario(DateTime fecha)
         {
-            bool resultado = base.DescontarSaldo(monto);
-            return resultado;
+            if (fecha.DayOfWeek == DayOfWeek.Saturday || fecha.DayOfWeek == DayOfWeek.Sunday)
+            {
+                return false;
+            }
+            
+            if (fecha.Hour < 6 || fecha.Hour >= 22)
+            {
+                return false;
+            }
+            
+            return true;
         }
     }
 }
