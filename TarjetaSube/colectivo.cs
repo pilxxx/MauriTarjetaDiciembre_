@@ -23,92 +23,76 @@ namespace TarjetaSube
             return valorPasaje;
         }
 
-        public virtual bool PuedePagar(Tarjeta tarjeta)
+        public Boleto PagarCon(Tarjeta tarjeta, DateTime fechaHora)
         {
-            // Verificar restricciones horarias usando polimorfismo
-            if (tarjeta is TarjetaMedioBoleto medio)
-            {
-                if (!medio.PuedeViajarEnEsteHorario()) return false;
-            }
-            else if (tarjeta is TarjetaBoletoGratuito gratuito)
-            {
-                if (!gratuito.PuedeViajarEnEsteHorario()) return false;
-            }
-            else if (tarjeta is TarjetaFranquiciaCompleta franquicia)
-            {
-                if (!franquicia.PuedeViajarEnEsteHorario()) return false;
-            }
-
-            return true;
-        }
-
-        public virtual decimal CalcularMonto(Tarjeta tarjeta)
-        {
-            // Calcular monto según tipo de tarjeta usando polimorfismo
-            if (tarjeta is TarjetaMedioBoleto medio)
-            {
-                return medio.CalcularDescuento(valorPasaje);
-            }
-            else if (tarjeta is TarjetaBoletoGratuito gratuito)
-            {
-                if (gratuito.PuedeViajarGratis())
-                {
-                    return 0;
-                }
-                return valorPasaje;
-            }
-            else if (tarjeta is TarjetaFranquiciaCompleta franquicia)
-            {
-                return franquicia.CalcularDescuento(valorPasaje);
-            }
-            else if (tarjeta.GetType() == typeof(Tarjeta))
-            {
-                return tarjeta.CalcularDescuentoUsoFrecuente(valorPasaje);
-            }
-
-            return valorPasaje;
-        }
-
-        public Boleto PagarCon(Tarjeta tarjeta, DateTime? fechaHora = null)
-        {
-            DateTime fecha = fechaHora ?? DateTime.Now;
-
-            // Verificar si puede pagar
-            if (!PuedePagar(tarjeta))
+            // Verificar si puede viajar en este horario
+            if (!tarjeta.PuedeViajar(fechaHora))
             {
                 return null;
             }
 
             // Verificar trasbordo
-            bool esTrasbordo = tarjeta.PuedeHacerTrasbordo(numeroLinea, fecha);
-            decimal montoACobrar = esTrasbordo ? 0 : CalcularMonto(tarjeta);
-
-            // Registrar viaje para boleto gratuito
-            if (tarjeta is TarjetaBoletoGratuito gratuito && montoACobrar == 0 && !esTrasbordo)
+            bool esTrasbordo = tarjeta.PuedeHacerTrasbordo(numeroLinea, fechaHora);
+            
+            decimal montoACobrar;
+            
+            if (esTrasbordo)
             {
-                gratuito.RegistrarViajeGratuito();
-                return new Boleto(numeroLinea, 0, tarjeta.ObtenerSaldo(), false);
+                montoACobrar = 0;
+            }
+            else
+            {
+                montoACobrar = tarjeta.CalcularMonto(valorPasaje);
             }
 
-            // Intentar descontar saldo
+            // Registrar viaje para boleto gratuito si es gratis y no es trasbordo
+            if (tarjeta is TarjetaBoletoGratuito gratuito && montoACobrar == 0 && !esTrasbordo)
+            {
+                gratuito.RegistrarViaje();
+                string tipo = ObtenerTipoTarjeta(tarjeta);
+                return new Boleto(numeroLinea, 0, tarjeta.ObtenerSaldo(), false, tipo, tarjeta.ID);
+            }
+
+            // Intentar descontar el saldo
             if (!tarjeta.DescontarSaldo(montoACobrar))
             {
                 return null;
             }
 
-            // Registrar viaje para trasbordo
+            // Registrar el viaje para trasbordo
             if (!esTrasbordo)
             {
-                tarjeta.RegistrarViajeParaTrasbordo(numeroLinea, fecha);
+                tarjeta.RegistrarViajeParaTrasbordo(numeroLinea, fechaHora);
             }
 
-            // Registrar viaje para boleto gratuito (si paga)
+            // Registrar viaje para tarjetas de boleto gratuito que pagaron
             if (tarjeta is TarjetaBoletoGratuito g)
             {
                 g.RegistrarViaje();
             }
 
-            return new Boleto(numeroLinea, montoACobrar, tarjeta.ObtenerSaldo(), esTrasbordo);
+            string tipoTarjeta = ObtenerTipoTarjeta(tarjeta);
+            return new Boleto(numeroLinea, montoACobrar, tarjeta.ObtenerSaldo(), esTrasbordo, tipoTarjeta, tarjeta.ID);
+        }
+
+        private string ObtenerTipoTarjeta(Tarjeta tarjeta)
+        {
+            if (tarjeta is TarjetaMedioBoleto)
+            {
+                return "Medio Boleto";
+            }
+            else if (tarjeta is TarjetaBoletoGratuito)
+            {
+                return "Boleto Gratuito";
+            }
+            else if (tarjeta is TarjetaFranquiciaCompleta)
+            {
+                return "Franquicia Completa";
+            }
+            else
+            {
+                return "Normal";
+            }
         }
     }
 }

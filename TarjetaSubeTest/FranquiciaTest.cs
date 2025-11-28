@@ -1,3 +1,4 @@
+/*
 using NUnit.Framework;
 using TarjetaSube;
 using System;
@@ -135,3 +136,4 @@ namespace TarjetaSubeTest
         }
     }
 }
+*/

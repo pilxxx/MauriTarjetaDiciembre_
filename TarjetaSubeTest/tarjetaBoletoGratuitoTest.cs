@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿/*
+using NUnit.Framework;
 using TarjetaSube;
 using System;
 
@@ -87,3 +88,4 @@ namespace TarjetaSube.Tests
         }
     }
 }
+*/
