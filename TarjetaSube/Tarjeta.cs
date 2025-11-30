@@ -159,15 +159,15 @@ namespace TarjetaSube
             }
             else if (viajesDelMes >= 30 && viajesDelMes <= 59)
             {
-                return montoBase * 0.80m; // 20 dto
+                return montoBase * 0.80m;
             }
             else if (viajesDelMes >= 60 && viajesDelMes <= 80)
             {
-                return montoBase * 0.75m; // 25 dto
+                return montoBase * 0.75m;
             }
             else
             {
-                return montoBase; // viaje n°81 en adelante
+                return montoBase;
             }
         }
         
@@ -201,6 +201,48 @@ namespace TarjetaSube
             }
             
             return true;
+        }
+        
+        public virtual Boleto PagarCon(Colectivo colectivo, DateTime fechaHora)
+        {
+            if (!PuedeViajar(fechaHora))
+            {
+                return null;
+            }
+
+            string lineaColectivo = colectivo.ObtenerLinea();
+            decimal valorPasaje = colectivo.ObtenerValorPasaje();
+            
+            bool esTrasbordo = PuedeHacerTrasbordo(lineaColectivo, fechaHora);
+            
+            decimal montoACobrar;
+            
+            if (esTrasbordo)
+            {
+                montoACobrar = 0;
+            }
+            else
+            {
+                montoACobrar = CalcularMonto(valorPasaje);
+            }
+
+            if (!DescontarSaldo(montoACobrar))
+            {
+                return null;
+            }
+
+            if (!esTrasbordo)
+            {
+                RegistrarViajeParaTrasbordo(lineaColectivo, fechaHora);
+            }
+
+            string tipoTarjeta = ObtenerTipoTarjeta();
+            return new Boleto(lineaColectivo, montoACobrar, saldo, esTrasbordo, tipoTarjeta, id);
+        }
+        
+        protected virtual string ObtenerTipoTarjeta()
+        {
+            return "Normal";
         }
     }
 }

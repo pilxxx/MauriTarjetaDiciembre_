@@ -36,5 +36,10 @@ namespace TarjetaSube
             }
             return true;
         }
+        
+        protected override string ObtenerTipoTarjeta()
+        {
+            return "Franquicia Completa";
+        }
     }
 }
