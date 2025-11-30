@@ -5,22 +5,22 @@ namespace TarjetaSube
 {
     public class EstacionBici
     {
-        // Lo que cuesta usar la bici por día
+        // lo que cuesta usar la bici por día
         private decimal tarifa = 1777.50m;
         
-        // Cuánto te multan si te pasás de tiempo
+        // cuánto te multan si te pasás de tiempo
         private decimal multa = 1000m;
         
-        // Tiempo máximo que podés tener la bici (en minutos)
+        // tiempo máximo que podés tener la bici (en minutos)
         private int tiempoMaximo = 60;
         
-        // Guardo cuándo cada tarjeta retiró la bici
+        // gardo cuándo cada tarjeta retiró la bici
         private Dictionary<int, DateTime> retiros;
         
         // Guardo cuántas multas debe cada tarjeta
         private Dictionary<int, decimal> multas;
         
-        // Guardo el último día que usó el servicio cada tarjeta
+        // guardo el último día que usó el servicio cada tarjeta
         private Dictionary<int, DateTime> ultimoDia;
         
         public EstacionBici()
@@ -34,7 +34,7 @@ namespace TarjetaSube
         {
             int id = tarjeta.ID;
             
-            // Si cambió el día, borro las multas viejas
+            // si cambió el día, borro las multas viejas
             if (ultimoDia.ContainsKey(id))
             {
                 if (ultimoDia[id].Date != cuando.Date)
@@ -43,26 +43,26 @@ namespace TarjetaSube
                 }
             }
             
-            // Calculo cuánto tiene que pagar
+            // calculo cuánto tiene que pagar
             decimal aPagar = tarifa;
             
-            // Si tiene multas pendientes, se las sumo
+            // si tiene multas pendientes, se las sumo
             if (multas.ContainsKey(id))
             {
                 aPagar = aPagar + multas[id];
             }
             
-            // Intento cobrarle
+            // intento cobrarle
             if (!tarjeta.DescontarSaldo(aPagar))
             {
-                return false; // No le alcanza la plata
+                return false; // no le alcanza la plata xd
             }
             
-            // Si pudo pagar, registro que retiró la bici
+            // si pudo pagar, registro que retiró la bici
             retiros[id] = cuando;
             ultimoDia[id] = cuando;
             
-            // Como pagó, borro las multas
+            // como pagó, borro las multas
             multas[id] = 0;
             
             return true;
@@ -72,18 +72,18 @@ namespace TarjetaSube
         {
             int id = tarjeta.ID;
             
-            // Me fijo si tiene una bici
+            // me fijo si tiene una bici
             if (!retiros.ContainsKey(id))
             {
                 return; // No tiene nada para devolver
             }
             
-            // Calculo cuánto tiempo tuvo la bici
+            // calculo cuánto tiempo tuvo la bici
             DateTime cuandoRetiro = retiros[id];
             TimeSpan tiempoUsado = cuando - cuandoRetiro;
             int minutos = (int)tiempoUsado.TotalMinutes;
             
-            // Si se pasó del tiempo, le pongo una multa
+            // si se pasó del tiempo, le pongo una multa
             if (minutos > tiempoMaximo)
             {
                 if (!multas.ContainsKey(id))
@@ -94,7 +94,7 @@ namespace TarjetaSube
                 multas[id] = multas[id] + multa;
             }
             
-            // Saco la bici del diccionario
+            // saco la bici del diccionario
             retiros.Remove(id);
         }
         
